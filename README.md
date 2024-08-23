@@ -40,42 +40,32 @@ pip uninstall -y peft
 pip install -e .
 ```
 
+Get the activation scales for outlier computation from precomputed scales in [QUIK repository](https://github.com/IST-DASLab/QUIK/tree/master/experiments/act_scales) or by collecting them with script from [SmoothQuant](https://github.com/mit-han-lab/smoothquant)
+
 Prepare a model for training with a GIFT-SW method by wrapping the base model and PEFT configuration with `get_peft_model`.
 
 ```python
 from transformers import AutoModelForCausalLM
-from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
-model_name_or_path = "bigscience/mt0-large"
-tokenizer_name_or_path = "bigscience/mt0-large"
+from peft import get_peft_config, get_peft_model, GIFTConfig, TaskType
 
-peft_config = LoraConfig(
-    task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=8, lora_alpha=32, lora_dropout=0.1
+model_name_or_path = "facebook/opt-1.3b"
+tokenizer_name_or_path = "facebook/opt-1.3b"
+path_to_act_scales = "./opt-1.3b.pt"
+
+peft_config = GIFTConfig(
+    outlier_num=64,
+    target_modules=['q_proj', 'k_proj'],
+    path_to_act_scales=path_to_act_scales,
 )
 
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path)
+model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
 model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
-"trainable params: 2359296 || all params: 1231940608 || trainable%: 0.19151053100118282"
+#"trainable params: 6,291,456 || all params: 1,517,182,976 || trainable%: 0.4147"
 ```
 
-To load a PEFT model for inference:
+To save and later inference GIFT-SW model it is highly recommended to "merge_and_unload()" the model as GIFT-SW is not a regular adapter, but a learned subset of model weights. Further tuning of already trained GIFT-SW model is equivalent to merging the model and learning new one.
 
-```py
-from peft import AutoPeftModelForCausalLM
-from transformers import AutoTokenizer
-import torch
-
-model = AutoPeftModelForCausalLM.from_pretrained("ybelkada/opt-350m-lora").to("cuda")
-tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
-
-model.eval()
-inputs = tokenizer("Preheat the oven to 350 degrees and place the cookie dough", return_tensors="pt")
-
-outputs = model.generate(input_ids=inputs["input_ids"].to("cuda"), max_new_tokens=50)
-print(tokenizer.batch_decode(outputs, skip_special_tokens=True)[0])
-
-"Preheat the oven to 350 degrees and place the cookie dough in the center of the oven. In a large bowl, combine the flour, baking powder, baking soda, salt, and cinnamon. In a separate bowl, combine the egg yolks, sugar, and vanilla."
-```
 
 ## Why you should use PEFT
 
