@@ -14,32 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<h1 align="center"> <p>🤗 PEFT</p></h1>
+<h1 align="center"> <p>🤗 GIFT-SW with PEFT</p></h1>
 <h3 align="center">
-    <p>State-of-the-art Parameter-Efficient Fine-Tuning (PEFT) methods</p>
+    <p>GIFT-SW with State-of-the-art Parameter-Efficient Fine-Tuning (PEFT) methods</p>
 </h3>
 
-Fine-tuning large pretrained models is often prohibitively costly due to their scale. Parameter-Efficient Fine-Tuning (PEFT) methods enable efficient adaptation of large pretrained models to various downstream applications by only fine-tuning a small number of (extra) model parameters instead of all the model's parameters. This significantly decreases the computational and storage costs. Recent state-of-the-art PEFT techniques achieve performance comparable to fully fine-tuned models.
+This repository contains code for GIFT-SW method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
 
 PEFT is integrated with Transformers for easy model training and inference, Diffusers for conveniently managing different adapters, and Accelerate for distributed training and inference for really big models.
 
-> [!TIP]
-> Visit the [PEFT](https://huggingface.co/PEFT) organization to read about the PEFT methods implemented in the library and to see notebooks demonstrating how to apply these methods to a variety of downstream tasks. Click the "Watch repos" button on the organization page to be notified of newly implemented methods and notebooks!
-
-Check the PEFT Adapters API Reference section for a list of supported PEFT methods, and read the [Adapters](https://huggingface.co/docs/peft/en/conceptual_guides/adapter), [Soft prompts](https://huggingface.co/docs/peft/en/conceptual_guides/prompting), and [IA3](https://huggingface.co/docs/peft/en/conceptual_guides/ia3) conceptual guides to learn more about how these methods work.
-
 ## Quickstart
 
-Install PEFT from pip:
+Install PEFT directly from repository:
 
 ```bash
-pip install peft
+cd GIFT_SW/
+pip install -e .
 ```
 
-Prepare a model for training with a PEFT method such as LoRA by wrapping the base model and PEFT configuration with `get_peft_model`. For the bigscience/mt0-large model, you're only training 0.19% of the parameters!
+In case you have already installed PEFT, you will need to reinstall it:
+
+```bash
+cd GIFT_SW/
+pip uninstall -y peft
+pip install -e .
+```
+
+Prepare a model for training with a GIFT-SW method by wrapping the base model and PEFT configuration with `get_peft_model`.
 
 ```python
-from transformers import AutoModelForSeq2SeqLM
+from transformers import AutoModelForCausalLM
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType
 model_name_or_path = "bigscience/mt0-large"
 tokenizer_name_or_path = "bigscience/mt0-large"
