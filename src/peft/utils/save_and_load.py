@@ -184,6 +184,8 @@ def get_peft_model_state_dict(
         to_return = {k: state_dict[k] for k in state_dict if "internal_xlora_classifier" in k}
     elif config.peft_type == PeftType.HRA:
         to_return = {k: state_dict[k] for k in state_dict if "hra_" in k}
+    elif config.peft_type == PeftType.GIFT:
+        to_return = {k: state_dict[k] for k in state_dict if "gift_" in k}
     else:
         raise ValueError(f"Unknown PEFT type passed: {config.peft_type}")
 
@@ -384,7 +386,7 @@ def set_peft_model_state_dict(
 
             peft_model_state_dict = {renamed_dora_weights(k): v for k, v in peft_model_state_dict.items()}
 
-    elif config.is_prompt_learning or config.peft_type == PeftType.ADAPTION_PROMPT:
+    elif config.is_prompt_learning or config.peft_type == PeftType.ADAPTION_PROMPT or config.peft_type == PeftType.GIFT:
         peft_model_state_dict = state_dict
     elif config.peft_type == PeftType.XLORA:
         peft_model_state_dict = state_dict
