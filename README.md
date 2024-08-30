@@ -90,7 +90,7 @@ python examples/generate_act_scales.py \
     --num-samples 512 \ #number of calibration samples
     --seq-len 2048 \ #max sequence length
     --dataset-path ../pile-val-backup/val.jsonl.zst
-
+```
 
 ## Citing GIFT-SW
 
