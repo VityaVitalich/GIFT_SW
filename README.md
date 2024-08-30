@@ -19,7 +19,7 @@ limitations under the License.
     <p>GIFT-SW with State-of-the-art Parameter-Efficient Fine-Tuning (PEFT) methods</p>
 </h3>
 
-This repository contains code for GIFT-SW method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
+This repository contains code for [GIFT-SW](https://arxiv.org/abs/2408.15300v1) method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
 
 PEFT is integrated with Transformers for easy model training and inference, Diffusers for conveniently managing different adapters, and Accelerate for distributed training and inference for really big models.
 
@@ -67,86 +67,43 @@ model.print_trainable_parameters()
 To save and later inference GIFT-SW model it is highly recommended to "merge_and_unload()" the model as GIFT-SW is not a regular adapter, but a learned subset of model weights. Further tuning of already trained GIFT-SW model is equivalent to merging the model and learning new one.
 
 
-## Why you should use PEFT
+## How to get activations in SmoothQuant
 
-There are many benefits of using PEFT but the main one is the huge savings in compute and storage, making PEFT applicable to many different use cases.
+To get the activation scales for your model you will need to get them with SmoothQuant method, it is simple and easy to use.
 
-### High performance on consumer hardware
+```bash
+git clone https://github.com/mit-han-lab/smoothquant
 
-Consider the memory requirements for training the following models on the [ought/raft/twitter_complaints](https://huggingface.co/datasets/ought/raft/viewer/twitter_complaints) dataset with an A100 80GB GPU with more than 64GB of CPU RAM.
+# make sure the git-lfs is installed
+# curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+# apt-get install git-lfs
+# git lfs install
 
-|   Model         | Full Finetuning | PEFT-LoRA PyTorch  | PEFT-LoRA DeepSpeed with CPU Offloading |
-| --------- | ---- | ---- | ---- |
-| bigscience/T0_3B (3B params) | 47.14GB GPU / 2.96GB CPU  | 14.4GB GPU / 2.96GB CPU | 9.8GB GPU / 17.8GB CPU |
-| bigscience/mt0-xxl (12B params) | OOM GPU | 56GB GPU / 3GB CPU | 22GB GPU / 52GB CPU |
-| bigscience/bloomz-7b1 (7B params) | OOM GPU | 32GB GPU / 3.8GB CPU | 18.1GB GPU / 35GB CPU |
+# clone the calibration data
+git clone https://huggingface.co/datasets/mit-han-lab/pile-val-backup
+# move to smoothquant and run the script
 
-With LoRA you can fully finetune a 12B parameter model that would've otherwise run out of memory on the 80GB GPU, and comfortably fit and train a 3B parameter model. When you look at the 3B parameter model's performance, it is comparable to a fully finetuned model at a fraction of the GPU memory.
+cd smoothquant
+python examples/generate_act_scales.py \
+    --model-name <your model name> \
+    --output-path <save path .pt> \
+    --num-samples 512 \ #number of calibration samples
+    --seq-len 2048 \ #max sequence length
+    --dataset-path ../pile-val-backup/val.jsonl.zst
 
-|   Submission Name        | Accuracy |
-| --------- | ---- |
-| Human baseline (crowdsourced) |	0.897 |
-| Flan-T5 | 0.892 |
-| lora-t0-3b | 0.863 |
 
-> [!TIP]
-> The bigscience/T0_3B model performance isn't optimized in the table above. You can squeeze even more performance out of it by playing around with the input instruction templates, LoRA hyperparameters, and other training related hyperparameters. The final checkpoint size of this model is just 19MB compared to 11GB of the full bigscience/T0_3B model. Learn more about the advantages of finetuning with PEFT in this [blog post](https://www.philschmid.de/fine-tune-flan-t5-peft).
+## Citing GIFT-SW
 
-### Quantization
-
-Quantization is another method for reducing the memory requirements of a model by representing the data in a lower precision. It can be combined with PEFT methods to make it even easier to train and load LLMs for inference.
-
-* Learn how to finetune [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf) with QLoRA and the [TRL](https://huggingface.co/docs/trl/index) library on a 16GB GPU in the [Finetune LLMs on your own consumer hardware using tools from PyTorch and Hugging Face ecosystem](https://pytorch.org/blog/finetune-llms/) blog post.
-* Learn how to finetune a [openai/whisper-large-v2](https://huggingface.co/openai/whisper-large-v2) model for multilingual automatic speech recognition with LoRA and 8-bit quantization in this [notebook](https://colab.research.google.com/drive/1DOkD_5OUjFa0r5Ik3SgywJLJtEo2qLxO?usp=sharing) (see this [notebook](https://colab.research.google.com/drive/1vhF8yueFqha3Y3CpTHN6q9EVcII9EYzs?usp=sharing) instead for an example of streaming a dataset).
-
-### Save compute and storage
-
-PEFT can help you save storage by avoiding full finetuning of models on each of downstream task or dataset. In many cases, you're only finetuning a very small fraction of a model's parameters and each checkpoint is only a few MBs in size (instead of GBs). These smaller PEFT adapters demonstrate performance comparable to a fully finetuned model. If you have many datasets, you can save a lot of storage with a PEFT model and not have to worry about catastrophic forgetting or overfitting the backbone or base model.
-
-## PEFT integrations
-
-PEFT is widely supported across the Hugging Face ecosystem because of the massive efficiency it brings to training and inference.
-
-### Diffusers
-
-The iterative diffusion process consumes a lot of memory which can make it difficult to train. PEFT can help reduce the memory requirements and reduce the storage size of the final model checkpoint. For example, consider the memory required for training a Stable Diffusion model with LoRA on an A100 80GB GPU with more than 64GB of CPU RAM. The final model checkpoint size is only 8.8MB!
-
-|   Model         | Full Finetuning | PEFT-LoRA  | PEFT-LoRA with Gradient Checkpointing  |
-| --------- | ---- | ---- | ---- |
-| CompVis/stable-diffusion-v1-4 | 27.5GB GPU / 3.97GB CPU | 15.5GB GPU / 3.84GB CPU | 8.12GB GPU / 3.77GB CPU | 
-
-> [!TIP]
-> Take a look at the [examples/lora_dreambooth/train_dreambooth.py](examples/lora_dreambooth/train_dreambooth.py) training script to try training your own Stable Diffusion model with LoRA, and play around with the [smangrul/peft-lora-sd-dreambooth](https://huggingface.co/spaces/smangrul/peft-lora-sd-dreambooth) Space which is running on a T4 instance. Learn more about the PEFT integration in Diffusers in this [tutorial](https://huggingface.co/docs/peft/main/en/tutorial/peft_integrations#diffusers).
-
-### Accelerate
-
-[Accelerate](https://huggingface.co/docs/accelerate/index) is a library for distributed training and inference on various training setups and hardware (GPUs, TPUs, Apple Silicon, etc.). PEFT models work with Accelerate out of the box, making it really convenient to train really large models or use them for inference on consumer hardware with limited resources.
-
-### TRL
-
-PEFT can also be applied to training LLMs with RLHF components such as the ranker and policy. Get started by reading:
-
-* [Fine-tune a Mistral-7b model with Direct Preference Optimization](https://towardsdatascience.com/fine-tune-a-mistral-7b-model-with-direct-preference-optimization-708042745aac) with PEFT and the [TRL](https://huggingface.co/docs/trl/index) library to learn more about the Direct Preference Optimization (DPO) method and how to apply it to a LLM.
-* [Fine-tuning 20B LLMs with RLHF on a 24GB consumer GPU](https://huggingface.co/blog/trl-peft) with PEFT and the [TRL](https://huggingface.co/docs/trl/index) library, and then try out the [gpt2-sentiment_peft.ipynb](https://github.com/huggingface/trl/blob/main/examples/notebooks/gpt2-sentiment.ipynb) notebook to optimize GPT2 to generate positive movie reviews.
-* [StackLLaMA: A hands-on guide to train LLaMA with RLHF](https://huggingface.co/blog/stackllama) with PEFT, and then try out the [stack_llama/scripts](https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama/scripts) for supervised finetuning, reward modeling, and RL finetuning.
-
-## Model support
-
-Use this [Space](https://stevhliu-peft-methods.hf.space) or check out the [docs](https://huggingface.co/docs/peft/main/en/index) to find which models officially support a PEFT method out of the box. Even if you don't see a model listed below, you can manually configure the model config to enable PEFT for a model. Read the [New transformers architecture](https://huggingface.co/docs/peft/main/en/developer_guides/custom_models#new-transformers-architectures) guide to learn how.
-
-## Contribute
-
-If you would like to contribute to PEFT, please check out our [contribution guide](https://huggingface.co/docs/peft/developer_guides/contributing).
-
-## Citing 🤗 PEFT
-
-To use 🤗 PEFT in your publication, please cite it by using the following BibTeX entry.
+To use GIFT-SW in your publication, please cite it by using the following BibTeX entry.
 
 ```bibtex
-@Misc{peft,
-  title =        {PEFT: State-of-the-art Parameter-Efficient Fine-Tuning methods},
-  author =       {Sourab Mangrulkar and Sylvain Gugger and Lysandre Debut and Younes Belkada and Sayak Paul and Benjamin Bossan},
-  howpublished = {\url{https://github.com/huggingface/peft}},
-  year =         {2022}
+@misc{zhelnin2024giftswgaussiannoiseinjected,
+      title={GIFT-SW: Gaussian noise Injected Fine-Tuning of Salient Weights for LLMs}, 
+      author={Maxim Zhelnin and Viktor Moskvoretskii and Egor Shvetsov and Egor Venediktov and Mariya Krylova and Aleksandr Zuev and Evgeny Burnaev},
+      year={2024},
+      eprint={2408.15300},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2408.15300}, 
 }
 ```
