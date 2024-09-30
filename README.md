@@ -19,7 +19,7 @@ limitations under the License.
     <p>GIFT-SW with State-of-the-art Parameter-Efficient Fine-Tuning (PEFT) methods</p>
 </h3>
 
-This repository contains code for [GIFT-SW](https://arxiv.org/abs/2408.15300v1) method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
+This repository contains code for GIFT-SW method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
 
 PEFT is integrated with Transformers for easy model training and inference, Diffusers for conveniently managing different adapters, and Accelerate for distributed training and inference for really big models.
 
@@ -92,18 +92,3 @@ python examples/generate_act_scales.py \
     --dataset-path ../pile-val-backup/val.jsonl.zst
 ```
 
-## Citing GIFT-SW
-
-To use GIFT-SW in your publication, please cite it by using the following BibTeX entry.
-
-```bibtex
-@misc{zhelnin2024giftswgaussiannoiseinjected,
-      title={GIFT-SW: Gaussian noise Injected Fine-Tuning of Salient Weights for LLMs}, 
-      author={Maxim Zhelnin and Viktor Moskvoretskii and Egor Shvetsov and Egor Venediktov and Mariya Krylova and Aleksandr Zuev and Evgeny Burnaev},
-      year={2024},
-      eprint={2408.15300},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2408.15300}, 
-}
-```
