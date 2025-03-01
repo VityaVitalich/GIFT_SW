@@ -19,9 +19,9 @@ limitations under the License.
     <p>GIFT-SW with State-of-the-art Parameter-Efficient Fine-Tuning (PEFT) methods</p>
 </h3>
 
-This repository contains code for GIFT-SW method implemented with [PEFT library](https://huggingface.co/PEFT). It could be used in the same interface as usual PEFT methods and easily pluggable into any code.
+This repository contains code for GIFT-SW method from paper [GIFT-SW: Gaussian noise Injected Fine-Tuning of Salient Weights for LLMs](https://arxiv.org/pdf/2408.15300). 
 
-PEFT is integrated with Transformers for easy model training and inference, Diffusers for conveniently managing different adapters, and Accelerate for distributed training and inference for really big models.
+It is implemented with [PEFT library](https://huggingface.co/PEFT) and could be used in the same interface as usual PEFT methods and easily pluggable into any code.
 
 ## Quickstart
 
